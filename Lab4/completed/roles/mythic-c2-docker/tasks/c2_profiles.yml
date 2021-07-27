@@ -1,0 +1,4 @@
+- name: Install C2 Profiles
+  include_tasks: "{{ item }}.yml"
+  with_items:
+    - http

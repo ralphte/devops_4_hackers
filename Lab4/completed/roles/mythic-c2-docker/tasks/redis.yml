@@ -1,0 +1,26 @@
+- name: Build redis image from git
+  docker_image:
+    build:
+      path: "{{ mythic_dir }}/src/redis-docker"
+      pull: yes
+      nocache: yes
+    name: mythic_redis
+    source: build
+
+- name: Mythic Redis
+  docker_container:
+    name: mythic_redis
+    image: mythic_redis
+    state: started
+    hostname: mythic_redis
+    restart_policy: always
+    ports:
+     - "{{ redis_port }}:6379"
+    log_options: 
+      max-size: "100m"
+      max-file: "3"
+    networks:
+      - name: '{{ dockernet }}'
+    labels:
+      name: mythic_redis
+    purge_networks: true

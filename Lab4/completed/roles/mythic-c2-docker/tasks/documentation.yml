@@ -1,0 +1,41 @@
+---
+- name: Ensure Documentation dir exists
+  file:
+    path: '{{ item }}'
+    state: directory
+  with_items:
+  - '{{ mythic_dir }}/documentation'
+
+- name: Build Documentation image from git
+  docker_image:
+    build:
+      path: "{{ mythic_dir }}/src/documentation-docker"
+      pull: yes
+      nocache: yes
+    name: mythic_documentation
+    source: build
+
+- name: Copy Mythic Server Files
+  ansible.builtin.copy:
+    src: "{{ mythic_dir }}/src/documentation-docker/"
+    dest: '{{ mythic_dir }}/documentation'
+    remote_src: yes
+
+- name: Mythic Documentation
+  docker_container:
+    name: mythic_documentation
+    image: mythic_documentation
+    state: started
+    hostname: mythic_documentation
+    restart_policy: always
+    command: server
+    volumes:
+     - "{{ mythic_dir }}/documentation:/src"
+    log_options: 
+      max-size: "100m"
+      max-file: "3"
+    networks:
+      - name: '{{ dockernet }}'
+    labels:
+      name: mythic_documentation
+    purge_networks: true

@@ -1,0 +1,16 @@
+---
+- name: Ensure Documentation dir exists
+  file:
+    path: '{{ item }}'
+    state: directory
+  with_items:
+  - '{{ mythic_dir }}'
+  - '{{ mythic_dir }}/src'
+
+- name: Clone a github repository
+  git:
+    repo: https://github.com/its-a-feature/Mythic
+    dest: /opt/docker/mythic/src
+    clone: yes
+    update: yes
+    version: "{{ mythic_version }}"

@@ -1,0 +1,13 @@
+- name: Install Roles
+  gather_facts: yes
+  hosts: all
+  connection: ssh
+  become: True
+  roles:
+    - { role: weareinteractive.users }
+    - { role: geerlingguy.pip }
+    - { role: geerlingguy.ntp }
+    - { role: geerlingguy.security }
+    - { role: viasite-ansible.zsh, zsh_shared: yes}
+    - { role: docker }
+    - { role: os }

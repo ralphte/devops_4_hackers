@@ -1,0 +1,39 @@
+- name: Ensure rabbitmq dir exists
+  file:
+    path: '{{ item }}'
+    state: directory
+  with_items:
+  - '{{ mythic_dir }}/rabbitmq'
+
+- name: Build rabbitmq image from git
+  docker_image:
+    build:
+      path: "{{ mythic_dir }}/src/rabbitmq-docker"
+      pull: yes
+      nocache: yes
+    name: mythic_rabbitmq
+    source: build
+
+- name: Mythic Rabbitmq
+  docker_container:
+    name: mythic_rabbitmq
+    image: mythic_rabbitmq
+    state: started
+    hostname: mythic_rabbitmq
+    restart_policy: always
+    env:
+      RABBITMQ_DEFAULT_USER: "{{ rabbitmq_user }}"
+      RABBITMQ_DEFAULT_PASS: "{{ rabbitmq_password }}"
+      RABBITMQ_DEFAULT_VHOST: "{{ rabbitmq_vhost }}"
+    ports:
+     - "{{ rabbitmq_port }}:5672"
+    volumes:
+     - "{{ mythic_dir }}/rabbitmq:/var/lib/rabbitmq"
+    log_options: 
+      max-size: "100m"
+      max-file: "3"
+    networks:
+      - name: '{{ dockernet }}'
+    labels:
+      name: mythic_rabbitmq
+    purge_networks: true

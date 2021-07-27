@@ -1,0 +1,4 @@
+---
+- include: install.yml
+- include: c2_profiles.yml
+- include: payloads.yml

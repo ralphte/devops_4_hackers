@@ -1,0 +1,64 @@
+---
+- name: Ensure Mythic Server dir exists
+  file:
+    path: '{{ item }}'
+    state: directory
+  with_items:
+  - '{{ mythic_dir }}/server'
+
+- name: Copy Mythic Server Files
+  ansible.builtin.copy:
+    src: "{{ mythic_dir }}/src/mythic-docker/"
+    dest: '{{ mythic_dir }}/server'
+    remote_src: yes
+
+- name: Build Mythic Server image from git
+  docker_image:
+    build:
+      path: "{{ mythic_dir }}/src/mythic-docker"
+      pull: yes
+      nocache: yes
+    name: mythic_server
+    source: build
+
+- name: Mythic Server
+  docker_container:
+    name: mythic_server
+    image: mythic_server
+    state: started
+    hostname: mythic_server
+    restart_policy: always
+    command: /bin/bash /Mythic/start_mythic_server.sh
+    env:
+      MYTHIC_POSTGRES_HOST: "{{ postgres_hostname }}"
+      MYTHIC_POSTGRES_PORT: "{{ postgres_port }}"
+      MYTHIC_POSTGRES_DB: "{{ postgres_db }}"
+      MYTHIC_POSTGRES_USER: "{{ postgres_user }}"
+      MYTHIC_POSTGRES_PASSWORD: "{{ postgres_password }}"
+      MYTHIC_RABBITMQ_HOST: "{{ rabbitmq_hostname }}"
+      MYTHIC_RABBITMQ_PORT: "{{ rabbitmq_port }}"
+      MYTHIC_RABBITMQ_USER: "{{ rabbitmq_user }}"
+      MYTHIC_RABBITMQ_PASSWORD: "{{ rabbitmq_password }}"
+      MYTHIC_RABBITMQ_VHOST: "{{ rabbitmq_vhost }}"
+      MYTHIC_JWT_SECRET: "{{ mythic_jwt_secret }}"
+      MYTHIC_REDIS_HOST: "{{ redis_host }}"
+      MYTHIC_REDIS_PORT: "{{ redis_port }}"
+      MYTHIC_DEBUG: "{{ mythic_debug }}"
+      MYTHIC_ADMIN_PASSWORD: "{{ mythic_admin_password }}"
+      MYTHIC_ADMIN_USER: "{{ mythic_admin_user }}"
+      MYTHIC_SERVER_PORT: "{{ mythic_server_port }}"
+      MYTHIC_ALLOWED_IP_BLOCKS: "{{ allowed_ip_blocks }}"
+      MYTHIC_DEFAULT_OPERATION_NAME: "{{ default_operation_name }}"
+      MYTHIC_NGINX_PORT: "{{ nginx_port }}"
+      MYTHIC_SERVER_HEADER: "{{ server_header }}"
+      MYTHIC_WEB_LOG_SIZE: "{{ web_log_size }}"
+      MYTHIC_WEB_KEEP_LOGS: "{{ web_keep_logs }}"
+      MYTHIC_SIEM_LOG_NAME: "{{ siem_log_name }}"
+    volumes:
+     - "{{ mythic_dir }}/server:/Mythic"
+    log_options: 
+      max-size: "100m"
+      max-file: "3"
+    network_mode: host
+    labels:
+      name: mythic_server

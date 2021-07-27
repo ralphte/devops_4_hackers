@@ -1,0 +1,41 @@
+digitalocean:
+  hosts:
+    devops-vm-1:
+      ansible_host: "143.198.179.219"
+      hostname: "devops-lab2"
+
+      ansible_python_interpreter: /usr/bin/python3
+      ansible_ssh_private_key_file: "/home/vagrant/devops"
+      ansible_ssh_public_key_file: "/home/vagrant/devops.pub"
+      ansible_ssh_user: 'ansible'
+
+      # Create Users
+      users:
+        - username: ralph
+          name: Ralph May
+          authorized_keys:
+            - "https://github.com/ralphte.keys"
+          home_create: yes
+          append: yes
+          home_mode: "0750"
+          shell: '/usr/bin/zsh'
+      
+      users_authorized_keys_exclusive: yes
+      security_sudoers_passwordless:
+        - ralph
+
+      # ZSH Settings
+      zsh_shared: yes
+      
+      # Docker Settings
+      dockernet: "docker"
+      docker_home_dir: '/opt/docker'
+
+      # Pip Settings
+      pip_install_packages:
+        - name: docker
+      pip_executable: pip3
+      pip_package: python3-pip
+
+      # NTP
+      ntp_timezone: 'America/New_York'

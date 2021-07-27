@@ -1,0 +1,46 @@
+- name: Ensure http profile dir exists
+  file:
+    path: '{{ item }}'
+    state: directory
+  with_items:
+  - '{{ mythic_dir }}/c2_profile/http'
+
+- name: Clone http profile github repository
+  git:
+    repo: https://github.com/MythicC2Profiles/http
+    dest: "{{ mythic_dir }}/c2_profile/http"
+    clone: yes
+    update: yes
+    version: "master"
+
+- name: Build http profile image from git
+  docker_image:
+    build:
+      path: "{{ mythic_dir }}/c2_profile/http/C2_Profiles/http"
+      pull: yes
+      nocache: yes
+    name: http
+    source: build
+
+- name: http
+  docker_container:
+    name: http
+    image: http
+    state: started
+    hostname: http
+    restart_policy: always
+    env:
+      MYTHIC_ADDRESS: "http://{{ mythic_server_hostname }}:{{ mythic_server_port }}/api/v1.4/agent_message"
+      MYTHIC_WEBSOCKET: "ws://{{ mythic_server_hostname }}:{{ mythic_server_port }}/ws/agent_message"
+      MYTHIC_USERNAME: "{{ rabbitmq_user }}"
+      MYTHIC_PASSWORD: "{{ rabbitmq_password }}"
+      MYTHIC_VIRTUAL_HOST: "{{ rabbitmq_vhost }}"
+      MYTHIC_HOST: "{{ rabbitmq_hostname }}"
+    volumes:
+     - "{{ mythic_dir }}/c2_profile/http/C2_Profiles/http:/Mythic/"
+    log_options: 
+      max-size: "100m"
+      max-file: "3"
+    network_mode: host
+    labels:
+      name: http_c2_profile

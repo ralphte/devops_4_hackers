@@ -1,0 +1,37 @@
+- name: Ensure react dir exists
+  file:
+    path: '{{ item }}'
+    state: directory
+  with_items:
+  - '{{ mythic_dir }}/react'
+
+- name: Build react image from git
+  docker_image:
+    build:
+      path: "{{ mythic_dir }}/src/mythic-react-docker"
+      pull: yes
+      nocache: yes
+    name: mythic_react
+    source: build
+
+- name: Copy React Files
+  ansible.builtin.copy:
+    src: "{{ mythic_dir }}/src/mythic-react-docker/mythic"
+    dest: '{{ mythic_dir }}/react/mythic'
+    remote_src: yes
+
+- name: Mythic React
+  docker_container:
+    name: mythic_react
+    image: mythic_react
+    state: started
+    hostname: mythic_react
+    restart_policy: always
+    volumes:
+     - "{{ mythic_dir }}/react:/mythic_react"
+    log_options: 
+      max-size: "100m"
+      max-file: "3"
+    network_mode: host
+    labels:
+      name: mythic_react

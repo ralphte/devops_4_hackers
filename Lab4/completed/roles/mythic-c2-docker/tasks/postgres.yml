@@ -1,0 +1,39 @@
+- name: Ensure postgres dir exists
+  file:
+    path: '{{ item }}'
+    state: directory
+  with_items:
+  - '{{ mythic_dir }}/postgres'
+
+- name: Build postgres image from git
+  docker_image:
+    build:
+      path: "{{ mythic_dir }}/src/postgres-docker"
+      pull: yes
+      nocache: yes
+    name: mythic_postgres
+    source: build
+
+- name: Mythic Postgres
+  docker_container:
+    name: mythic_postgres
+    image: mythic_postgres
+    state: started
+    hostname: "{{ postgres_hostname }}"
+    restart_policy: always
+    env:
+      POSTGRES_DB: "{{ postgres_db }}"
+      POSTGRES_USER: "{{ postgres_user }}"
+      POSTGRES_PASSWORD: "{{ postgres_password }}"
+    volumes:
+     - "{{ mythic_dir }}/postgres:/var/lib/postgresql/data"
+    log_options: 
+      max-size: "100m"
+      max-file: "3"
+    ports:
+     - "{{ postgres_port }}:5432"
+    networks:
+      - name: '{{ dockernet }}'
+    labels:
+      name: mythic_postgres
+    purge_networks: true

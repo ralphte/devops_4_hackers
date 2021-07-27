@@ -1,0 +1,51 @@
+---
+- name: Ensure GraphQL dir exists
+  file:
+    path: '{{ item }}'
+    state: directory
+  with_items:
+  - '{{ mythic_dir }}/graphql'
+
+- name: Build GraphQL image from git
+  docker_image:
+    build:
+      path: "{{ mythic_dir }}/src/hasura-docker"
+      pull: yes
+      nocache: yes
+    name: mythic_graphql
+    source: build
+
+- name: Copy GrphQL Files
+  ansible.builtin.copy:
+    src: "{{ mythic_dir }}/src/hasura-docker/metadata/"
+    dest: '{{ mythic_dir }}/graphql/metadata'
+    remote_src: yes
+
+- name: Mythic Graphql
+  docker_container:
+    name: mythic_graphql
+    image: mythic_graphql
+    state: started
+    hostname: mythic_graphql
+    restart_policy: always
+    command: server
+    env:
+      HASURA_GRAPHQL_DATABASE_URL: "postgres://{{ postgres_user }}:{{ postgres_password }}@{{ postgres_hostname }}:{{ postgres_port }}/{{ postgres_db }}"
+      HASURA_GRAPHQL_METADATA_DATABASE_URL: "postgres://{{ postgres_user }}:{{ postgres_password }}@{{ postgres_hostname }}:{{ postgres_port }}/{{ postgres_db }}"
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_ADMIN_SECRET: "{{ hasura_secret }}"
+      HASURA_GRAPHQL_INSECURE_SKIP_TLS_VERIFY: "true"
+      HASURA_GRAPHQL_SERVER_PORT: "{{ hasura_port }}"
+      HASURA_GRAPHQL_METADATA_DIR: "/metadata"
+      HASURA_GRAPHQL_LIVE_QUERIES_MULTIPLEXED_REFETCH_INTERVAL: "500"
+      HASURA_GRAPHQL_AUTH_HOOK: "http://{{ mythic_server_hostname }}:{{ mythic_server_port }}/graphql/webhook"
+      MYTHIC_ACTIONS_URL_BASE: "http://{{ mythic_server_hostname }}:{{ mythic_server_port }}/api/v1.4"
+    volumes:
+     - "{{ mythic_dir }}/graphql/metadata:/metadata"
+    log_options: 
+      max-size: "100m"
+      max-file: "3"
+    network_mode: host
+    labels:
+      name: mythic_graphql

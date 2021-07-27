@@ -1,0 +1,61 @@
+- name: Ensure nginx dir exists
+  file:
+    path: '{{ item }}'
+    state: directory
+  with_items:
+  - '{{ mythic_dir }}/nginx'
+
+- name: Build nginx image from git
+  docker_image:
+    build:
+      path: "{{ mythic_dir }}/src/nginx-docker"
+      pull: yes
+      nocache: yes
+    name: mythic_nginx
+    source: build
+
+- name: Copy Nginx Files
+  ansible.builtin.copy:
+    src: "{{ mythic_dir }}/src/nginx-docker/config/"
+    dest: '{{ mythic_dir }}/nginx/config'
+    remote_src: yes
+
+- name: Copy SSL Cert
+  ansible.builtin.copy:
+    src: "{{ key_output_path }}/{{ server_hostname }}_cert.pem"
+    dest: '{{ mythic_dir }}/nginx/ssl/mythic-cert.crt'
+    remote_src: yes
+
+- name: Copy SSL Private Cert
+  ansible.builtin.copy:
+    src: "{{ key_output_path }}/{{ server_hostname }}_privkey.pem"
+    dest: '{{ mythic_dir }}/nginx/ssl/mythic-ssl.key'
+    remote_src: yes
+
+
+- name: Mythic Nginx
+  docker_container:
+    name: mythic_nginx
+    image: mythic_nginx
+    state: started
+    hostname: mythic_nginx
+    restart_policy: always
+    env:
+      DOCUMENTATION_HOST: "{{ documentation_hostname }}"
+      DOCUMENTATION_PORT: "{{ documentation_port }}"
+      NGINX_PORT: "{{ nginx_port }}"
+      MYTHIC_SERVER_HOST: "{{ mythic_server_hostname }}"
+      MYTHIC_SERVER_PORT: "{{ mythic_server_port }}"
+      HASURA_HOST: "{{ hasura_hostname }}"
+      HASURA_PORT: "{{ hasura_port }}"
+      NEW_UI_HOST: "{{ mythic_server_hostname }}"
+      NEW_UI_PORT: "3000"
+    volumes:
+     - "{{ mythic_dir }}/nginx/ssl:/etc/ssl/private"
+     - "{{ mythic_dir }}/nginx/config:/etc/nginx"
+    log_options: 
+      max-size: "100m"
+      max-file: "3"
+    network_mode: host
+    labels:
+      name: mythic_graphql

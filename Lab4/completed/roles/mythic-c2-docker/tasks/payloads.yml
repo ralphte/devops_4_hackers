@@ -1,0 +1,4 @@
+- name: Install Payloads
+  include_tasks: "{{ item }}.yml"
+  with_items:
+    - apollo

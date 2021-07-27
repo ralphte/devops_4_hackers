@@ -1,0 +1,52 @@
+- name: Ensure apollo dir exists
+  file:
+    path: '{{ item }}'
+    state: directory
+  with_items:
+  - '{{ mythic_dir }}/payloads/apollo'
+
+- name: Clone apollo github repository
+  git:
+    repo: https://github.com/MythicAgents/Apollo
+    dest: "{{ mythic_dir }}/payloads/apollo"
+    clone: yes
+    update: yes
+    version: "master"
+
+- name: Build apollo image from git
+  docker_image:
+    build:
+      path: "{{ mythic_dir }}/payloads/apollo/Payload_Type/apollo"
+      pull: yes
+      nocache: yes
+    name: apollo
+    source: build
+
+- name: change payload_service.sh permissions
+  file:
+    path: "{{ mythic_dir }}/payloads/apollo/Payload_Type/apollo/mythic/payload_service.sh"
+    state: file
+    mode: "0775"
+
+- name: apollo
+  docker_container:
+    name: apollo
+    image: apollo
+    state: started
+    hostname: apollo
+    restart_policy: always
+    env:
+      MYTHIC_ADDRESS: "http://{{ mythic_server_hostname }}:{{ mythic_server_port }}/api/v1.4/agent_message"
+      MYTHIC_WEBSOCKET: "ws://{{ mythic_server_hostname }}:{{ mythic_server_port }}/ws/agent_message"
+      MYTHIC_USERNAME: "{{ rabbitmq_user }}"
+      MYTHIC_PASSWORD: "{{ rabbitmq_password }}"
+      MYTHIC_VIRTUAL_HOST: "{{ rabbitmq_vhost }}"
+      MYTHIC_HOST: "{{ rabbitmq_hostname }}"
+    volumes:
+     - "{{ mythic_dir }}/payloads/apollo/Payload_Type/apollo:/Mythic/"
+    log_options: 
+      max-size: "100m"
+      max-file: "3"
+    network_mode: host
+    labels:
+      name: apollo_payload

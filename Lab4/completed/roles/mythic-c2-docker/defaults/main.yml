@@ -1,0 +1,35 @@
+mythic_dir_name: 'mythic'
+mythic_dir: '{{ docker_home_dir }}/{{ mythic_dir_name }}'
+mythic_version: 'master'
+
+documentation_hostname: "127.0.0.1"
+documentation_port: "1313"
+
+mythic_debug: "false"
+mythic_server_hostname: "127.0.0.1"
+mythic_server_port: "17443"
+
+hasura_hostname: "127.0.0.1"
+hasura_port: "8080"
+
+postgres_hostname: "127.0.0.1"
+postgres_port: "5432"
+postgres_db: "mythic_db"
+postgres_user: "mythic_user"
+
+rabbitmq_hostname: "127.0.0.1"
+rabbitmq_port: "5672"
+rabbitmq_user: "mythic_user"
+rabbitmq_vhost: "mythic_vhost"
+
+redis_host: "127.0.0.1"
+redis_port: "6379"
+
+nginx_port: "7443"
+
+server_header: "nginx 1.2"
+siem_log_name: ''
+web_keep_logs: "false"
+web_log_size: "1024000"
+excluded_c2_profiles: ''
+excluded_payload_types: ''
