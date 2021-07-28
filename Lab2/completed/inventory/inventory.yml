@@ -14,7 +14,8 @@ digitalocean:
         - username: ralph
           name: Ralph May
           authorized_keys:
-            - "https://github.com/ralphte.keys"
+            - "{{ lookup('file', '/home/vagrant/devops.pub') }}"
+            #- "https://github.com/ralphte.keys"
           home_create: yes
           append: yes
           home_mode: "0750"

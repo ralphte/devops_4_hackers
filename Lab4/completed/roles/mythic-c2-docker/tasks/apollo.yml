@@ -12,6 +12,7 @@
     clone: yes
     update: yes
     version: "master"
+    ignore_errors: True
 
 - name: Build apollo image from git
   docker_image:

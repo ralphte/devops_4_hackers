@@ -12,6 +12,7 @@
     clone: yes
     update: yes
     version: "master"
+  ignore_errors: True
 
 - name: Build http profile image from git
   docker_image:
